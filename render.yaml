@@ -1,0 +1,22 @@
+services:
+  - type: worker
+    name: keith-agent
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scripts/keith_worker.py
+    autoDeploy: false
+    envVars:
+      - key: NEXT_PUBLIC_LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
