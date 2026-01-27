@@ -49,6 +49,8 @@ export async function createOrganization(formData: FormData) {
     const description = formData.get('description') as string
     const programsRaw = formData.get('programs') as string
     const programs = programsRaw ? JSON.parse(programsRaw) : []
+    const secondary_categories_raw = formData.getAll('secondary_categories') as string[]
+    const secondary_categories = secondary_categories_raw || []
 
     // 1. Create Auth User
     // Generate random temp password
