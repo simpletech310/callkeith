@@ -1,7 +1,8 @@
 services:
-  - type: worker
+  - type: web
     name: keith-agent
-    env: python
+    runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python scripts/keith_worker.py
     autoDeploy: false

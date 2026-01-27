@@ -619,7 +619,29 @@ async def poll_agent_tasks():
     except Exception as e:
         print(f"⚠️ Polling Error: {e}")
 
+async def health_check_server():
+    """Simple HTTP server for Render Health Checks"""
+    from aiohttp import web
+    
+    async def handle(request):
+        return web.Response(text="Keith is alive and listening.")
+
+    app = web.Application()
+    app.add_routes([web.get('/', handle), web.get('/health', handle)])
+    
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+    # Render provides PORT in env, default to 10000 if local
+    port = int(os.getenv("PORT", 10000))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"🌍 HTTP Health Check running on port {port}")
+
 async def main():
+    # Start Health Check Server (Required for Render Web Service)
+    await health_check_server()
+    
     # ... existing LiveKit connection ...
     room = rtc.Room()
 

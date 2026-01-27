@@ -33,13 +33,14 @@ You will need these exact values for BOTH Vercel and Render.
 
 ## Part 3: Deploy Backend Agent to Render
 1.  Go to [render.com](https://dashboard.render.com).
-2.  Click **New +** -> **Background Worker** (Recommended for stability) or **Web Service**.
+2.  Click **New +** -> **Web Service** (Required for Free Tier).
 3.  Connect GitHub Repo: `simpletech310/callkeith`.
 4.  **Configuration:**
     *   **Name:** `keith-agent`
     *   **Runtime:** Python 3
     *   **Build Command:** `pip install -r requirements.txt`
     *   **Start Command:** `python scripts/keith_worker.py`
+    *   **Instance Type:** Free (Note: Will spin down after 15 mins of inactivity).
 5.  **Environment Variables:** Add all the keys from Part 1 here as well.
 6.  Click **Create**.
 

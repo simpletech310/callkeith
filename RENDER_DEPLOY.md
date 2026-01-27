@@ -1,6 +1,6 @@
 # Deploying Keith to Render
 
-This guide outlines how to deploy the **Keith Voice Agent** (`keith_worker.py`) to [Render.com](https://render.com) as a Background Worker.
+This guide outlines how to deploy the **Keith Voice Agent** (`keith_worker.py`) to [Render.com](https://render.com) as a **Web Service** (Free Tier).
 
 ## Prerequisites
 
@@ -17,8 +17,11 @@ This guide outlines how to deploy the **Keith Voice Agent** (`keith_worker.py`) 
 4.  Render will automatically detect the `render.yaml` file.
 
 ### 2. Service Configuration
-You will see a service named `keith-agent` (Worker).
+You will see a service named `keith-agent` (**Web Service**).
 Render will prompt you to input the values for the Environment Variables defined in `render.yaml`.
+
+> [!IMPORTANT]
+> Since this is a **Web Service** on the Free Tier, it will "spin down" after 15 minutes of inactivity. The first time you call it after a break, it might take 30-60 seconds to wake up.
 
 **Required Variables**:
 -   `NEXT_PUBLIC_LIVEKIT_URL`: Your LiveKit WebSocket URL.
