@@ -22,6 +22,7 @@ export default function AddResourceModal({
 }) {
     const [isPending, startTransition] = useTransition()
     const [useCustomCategory, setUseCustomCategory] = useState(false)
+    const [customCategory, setCustomCategory] = useState('') // Fixed: Added missing state
     const [secondaryCats, setSecondaryCats] = useState<string[]>(initialData?.secondary_categories || [])
 
     const CATEGORY_OPTIONS = [
@@ -166,10 +167,10 @@ export default function AddResourceModal({
                                         disabled={isDisabled}
                                         onClick={() => handleToggleSecondary(cat)}
                                         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${isSelected
-                                                ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                                                : isDisabled
-                                                    ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
-                                                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                            : isDisabled
+                                                ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                                             }`}
                                     >
                                         {cat.charAt(0).toUpperCase() + cat.slice(1)}
