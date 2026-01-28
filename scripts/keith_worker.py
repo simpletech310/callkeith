@@ -197,7 +197,7 @@ async def perform_rag_search(query):
     final_data = []
     
     try:
-        response = supabase.table('resources').select('*').text_search('description', query).execute()
+        response = supabase.table('resources').select('*').text_search('description', query, type_='websearch').execute()
         if response.data:
             # Manual slice since limit() might fail on builder
             final_data.extend(response.data[:5])
@@ -387,7 +387,7 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
                              # Create Lead
                              # (Resource Lookup Logic)
                              # Note: .limit() chaining might fail after text_search in some versions, using range(0,1) or just executing.
-                             res_query = supabase.table('resources').select('id, name').text_search('description', program).execute()
+                             res_query = supabase.table('resources').select('id, name').text_search('description', program, type_='websearch').execute()
                              if not res_query.data:
                                   res_query = supabase.table('resources').select('id, name').ilike('description', f"%{program}%").limit(1).execute()
                              
