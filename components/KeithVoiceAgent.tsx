@@ -33,8 +33,14 @@ export function KeithVoiceAgent({ userContext }: KeithVoiceAgentProps) {
     const handleStart = async () => {
         setIsInitializing(true);
         try {
-            // Encode user context if available
-            let query = "room=health-help-01";
+            // Generate or Retrieve Unique Room ID
+            let roomId = sessionStorage.getItem("keith_room_id");
+            if (!roomId) {
+                roomId = `keith-${crypto.randomUUID()}`;
+                sessionStorage.setItem("keith_room_id", roomId);
+            }
+
+            let query = `room=${roomId}`;
             console.log(" KeithVoiceAgent: userContext =", userContext);
 
             if (userContext) {
