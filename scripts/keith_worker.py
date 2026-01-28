@@ -448,6 +448,26 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
             final_response = await get_ai_response(state, None)
             if final_response and final_response.content:
                  await send_message(room, final_response.content)
+            
+            # Check for disconnect signals
+            should_disconnect = False
+            for tool_call in ai_message.tool_calls:
+                 if tool_call.function.name == "create_account":
+                     # Check the tool result in history to see if it was success/exists
+                     # We can just assume if we ran create_account, we're done.
+                     # But let's check the result content we appended.
+                     last_msg = state.history[-1]
+                     if last_msg.get('role') == 'tool' and last_msg.get('name') == 'create_account':
+                         res_data = json.loads(last_msg['content'])
+                         if res_data.get('status') in ['success', 'exists']:
+                             should_disconnect = True
+            
+            if should_disconnect:
+                print("👋 Account Created/Found. Initiating Auto-Disconnect Sequence...")
+                # Wait for TTS to finish speaking (approx 12 seconds for the long message)
+                await asyncio.sleep(12) 
+                await room.disconnect()
+                print("✅ Room Disconnected.")
 
         else:
             # Normal Text Response
