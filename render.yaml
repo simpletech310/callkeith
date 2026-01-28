@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python scripts/keith_worker.py
+    startCommand: python scripts/keith_worker.py start
     autoDeploy: false
     envVars:
       - key: NEXT_PUBLIC_LIVEKIT_URL
