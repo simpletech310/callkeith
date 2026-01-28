@@ -71,7 +71,8 @@ class ConversationState:
                     "## Phase 3: The Handoff & Verification\n"
                     "1. **Trigger Application:** If they agree to the top match (or another selection), say: 'Great. I can send your application over to them right now so they have your details.'\n"
                     "2. **Confirm Details:** 'I have your details. I'm going to create your account and submit this application for you right now.'\n"
-                    "3. **Execute Command:** Once confirmed, trigger: `[CREATE_ACCOUNT|Name|Email|Phone|Program Name|Summary]`\n\n"
+                    "3. **Validate:** Verify the email format (e.g., name@example.com) before proceeding. If unclear, ask for spelling.\n"
+                    "4. **Execute Command:** Once confirmed, trigger: `[CREATE_ACCOUNT|Name|Email|Phone|Program Name|Summary]`\n\n"
                     "# OPERATIONAL GUARDRAILS\n"
                     "- **NO DATA DUMPING:** Never list more than 1 resource at a time unless explicitly asked for a list.\n"
                     "- **NO UNVERIFIED RESOURCES:** Only recommend what is in your database.\n"
@@ -79,6 +80,11 @@ class ConversationState:
                 )
             }
         ]
+
+def validate_email_format(email: str) -> bool:
+    """Basic regex validation for email."""
+    pattern = r"[^@]+@[^@]+\.[^@]+"
+    return re.match(pattern, email) is not None
 
 async def create_magic_user(name, email, phone, program):
     """Creates a Supabase user and attaches program info."""
@@ -278,6 +284,13 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
                 
                 print(f"   -> Processing Lead for: {name}, Program: {program}")
                 replacement_msg = ""
+
+                # Pre-check Email Format
+                if not validate_email_format(email.strip()):
+                    print(f"❌ Invalid Email Format Detected: {email}")
+                    replacement_msg = f"\n[Error: The email you provided ({email}) looks incomplete. Please say your email again, spelling it out if needed (e.g., 'name at example dot com').]\n"
+                    final_response_text = final_response_text.replace(full_token, replacement_msg)
+                    continue
     
                 if is_authenticated:
                      # Returning User Flow
