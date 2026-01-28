@@ -396,9 +396,9 @@ async def entrypoint(ctx: JobContext):
         except Exception as e:
             print(f"⚠️ Error processing data: {e}")
 
-    # No while loop needed effectively, the agent runner handles the lifecycle.
-    # But we need to keep the session alive.
-    # The 'run_app' handles the event loop.
+    # Send Welcome Message
+    initial_greeting = "Hi, I'm Keith. I'm here to help you find resources like food, housing, or legal aid. You can just talk to me like a friend—what's on your mind?"
+    asyncio.create_task(send_message(room, initial_greeting))
     
     print(f"✅ Keith connected to room: {ctx.room.name}")
     
