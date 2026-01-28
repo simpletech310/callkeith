@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Icons } from "@/components/ui/Icons";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -140,7 +141,7 @@ export default function LoginPage() {
                             )}
                         </button>
 
-                        <div className="text-center">
+                        <div className="text-center flex flex-col gap-4">
                             <button
                                 type="button"
                                 onClick={() => setMode(mode === 'magic' ? 'password' : 'magic')}
@@ -148,6 +149,18 @@ export default function LoginPage() {
                             >
                                 {mode === 'magic' ? 'Use PIN / Password instead' : 'Use Magic Link instead'}
                             </button>
+
+                            {mode === 'magic' && (
+                                <p className="text-xs text-slate-400 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <span className="font-semibold text-slate-600">What is a Magic Link?</span>
+                                    <br />
+                                    We'll email you a secure link. Click it to log in instantly—no password required.
+                                </p>
+                            )}
+
+                            <Link href="/" className="text-sm text-slate-400 hover:text-slate-600 transition-colors inline-flex items-center justify-center gap-1 group">
+                                <Icons.arrowLeft className="w-3 h-3 transition-transform group-hover:-translate-x-1" /> Back to Home
+                            </Link>
                         </div>
                     </form>
                 )}
