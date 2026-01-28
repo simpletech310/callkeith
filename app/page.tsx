@@ -39,22 +39,22 @@ export default function Home() {
             <div className="mx-auto max-w-2xl py-24 sm:py-32 lg:py-40">
               <div className="hidden sm:mb-8 sm:flex sm:justify-center">
                 <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-slate-500 ring-1 ring-slate-900/10 hover:ring-slate-900/20">
-                  Powered by <strong>KEITH™ Logic</strong> for intelligent triage.
+                  Built <strong>Mobile First</strong>. Ready to help.
                 </div>
               </div>
               <div className="text-center">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-                  Compassionate Resource Triage, Instantly.
+                <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-7xl">
+                  Call Keith.
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-slate-600">
-                  Connect with housing, food, and emergency services through a calm, empathetic AI case manager designed to listen, verify, and guide you to the right help.
+                  Your neighborhood friend that gets you connected. No forms, no stress. Just help.
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                   <Link
                     href="/keith"
                     className="rounded-md bg-emerald-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
                   >
-                    Talk to KEITH
+                    Call Keith
                   </Link>
                   <Link
                     href="/login"
@@ -79,38 +79,38 @@ export default function Home() {
                 </div>
                 <div className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
                   <h3 className="flex auto items-center gap-x-2 text-lg font-semibold leading-8 text-slate-900">
-                    Listen to Understand
+                    Just Talk
                   </h3>
                   <p className="flex-auto">
-                    Speak naturally. KEITH listens without judgment, validating your situation and asking the right questions to identify your immediate needs.
+                    Don't worry about complex forms. Just tell Keith what you need like you're talking to a friend.
                   </p>
                 </div>
               </div>
               {/* Feature 2 */}
               <div className="flex flex-col">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600">
-                  <Icons.check className="h-6 w-6 text-white" aria-hidden="true" />
+                  <Icons.resources className="h-6 w-6 text-white" aria-hidden="true" />
                 </div>
                 <div className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
                   <h3 className="flex auto items-center gap-x-2 text-lg font-semibold leading-8 text-slate-900">
-                    Verify & Validate
+                    Unlimited Access
                   </h3>
                   <p className="flex-auto">
-                    Secure identity verification ensures that resources are allocated fairly, speeding up the approval process for housing and aid programs.
+                    We aren't limited to old lists. We search everywhere to find resources you didn't know existed.
                   </p>
                 </div>
               </div>
               {/* Feature 3 */}
               <div className="flex flex-col">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600">
-                  <Icons.resources className="h-6 w-6 text-white" aria-hidden="true" />
+                  <Icons.check className="h-6 w-6 text-white" aria-hidden="true" />
                 </div>
                 <div className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
                   <h3 className="flex auto items-center gap-x-2 text-lg font-semibold leading-8 text-slate-900">
-                    Connect to Care
+                    Real Connection
                   </h3>
                   <p className="flex-auto">
-                    Get direct referrals to over 15 local nonprofits and government agencies, tracked in real-time through your personal Magic Link dashboard.
+                    We verify valid programs so you don't waste time. Get connected to real help, fast.
                   </p>
                 </div>
               </div>
@@ -133,16 +133,16 @@ export default function Home() {
                   <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 font-bold text-2xl">
                     1
                   </div>
-                  <dt className="text-xl font-semibold leading-7 text-slate-900">Talk to KEITH</dt>
+                  <dt className="text-xl font-semibold leading-7 text-slate-900">Call Keith</dt>
                   <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                    <p className="flex-auto">Just start talking. Explain your situation in your own words. Keith is trained to understand complex needs and verify your information securely.</p>
+                    <p className="flex-auto">Just start talking. Explain your situation in your own words. Keith is like a friendly neighbor who knows all the right people.</p>
                   </dd>
                 </div>
                 <div className="flex flex-col items-center text-center">
                   <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 font-bold text-2xl">
                     2
                   </div>
-                  <dt className="text-xl font-semibold leading-7 text-slate-900">Get Matched</dt>
+                  <dt className="text-xl font-semibold leading-7 text-slate-900">Get Matches</dt>
                   <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
                     <p className="flex-auto">Our system instantly searches thousands of local programs (housing, job training, legal aid) to find the ones you actually qualify for.</p>
                   </dd>
@@ -151,7 +151,7 @@ export default function Home() {
                   <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 font-bold text-2xl">
                     3
                   </div>
-                  <dt className="text-xl font-semibold leading-7 text-slate-900">Track Progress</dt>
+                  <dt className="text-xl font-semibold leading-7 text-slate-900">Get Connected</dt>
                   <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
                     <p className="flex-auto">No more phone tag. You'll get a Dashboard to track every application, upload documents once, and see your status in real-time.</p>
                   </dd>
@@ -177,7 +177,7 @@ export default function Home() {
                   Become a Partner
                 </Link>
                 <a href="mailto:partners@onward.ai" className="text-sm font-semibold leading-6 text-white">
-                  Contact Sales <span aria-hidden="true">→</span>
+                  Contact Us <span aria-hidden="true">→</span>
                 </a>
               </div>
             </div>
