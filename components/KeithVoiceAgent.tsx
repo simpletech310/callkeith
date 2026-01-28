@@ -424,7 +424,11 @@ function ChatInterface() {
                                     ? "bg-white text-slate-800 border border-slate-100 rounded-tl-sm"
                                     : "bg-emerald-600 text-white rounded-tr-sm"
                             )}>
-                                {isAgent && <span className="text-[10px] font-bold text-emerald-600 block mb-1 uppercase tracking-wider">KEITH</span>}
+                                {isAgent ? (
+                                    <span className="text-[10px] font-bold text-emerald-600 block mb-1 uppercase tracking-wider">KEITH</span>
+                                ) : (
+                                    <span className="text-[10px] font-bold text-white/90 block mb-1 uppercase tracking-wider text-right">USER</span>
+                                )}
                                 {(() => {
                                     // 1. Split by Markdown Links: [Label](Url)
                                     const mdLinkRegex = /(\[[^\]]+\]\([^\)]+\))/g;

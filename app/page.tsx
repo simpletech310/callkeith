@@ -16,12 +16,7 @@ export default function Home() {
             </span>
           </div>
           <nav className="flex items-center gap-6">
-            <Link
-              href="/organization/login"
-              className="text-sm font-medium text-slate-500 hover:text-emerald-600 transition-colors"
-            >
-              Become a Resource
-            </Link>
+
             <Link
               href="/login"
               className="group flex items-center gap-2 text-sm font-semibold leading-6 text-slate-600 transition-colors hover:text-emerald-600"
@@ -56,67 +51,14 @@ export default function Home() {
                   >
                     Call Keith
                   </Link>
-                  <Link
-                    href="/login"
-                    className="text-sm font-semibold leading-6 text-slate-900"
-                  >
-                    My Dashboard <span aria-hidden="true">→</span>
-                  </Link>
+
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 pb-24">
-          <div className="mx-auto max-w-2xl lg:max-w-none">
-            <div className="grid grid-cols-1 gap-x-8 gap-y-16 lg:grid-cols-3">
-              {/* Feature 1 */}
-              <div className="flex flex-col">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600">
-                  <Icons.mic className="h-6 w-6 text-white" aria-hidden="true" />
-                </div>
-                <div className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <h3 className="flex auto items-center gap-x-2 text-lg font-semibold leading-8 text-slate-900">
-                    Just Talk
-                  </h3>
-                  <p className="flex-auto">
-                    Don't worry about complex forms. Just tell Keith what you need like you're talking to a friend.
-                  </p>
-                </div>
-              </div>
-              {/* Feature 2 */}
-              <div className="flex flex-col">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600">
-                  <Icons.resources className="h-6 w-6 text-white" aria-hidden="true" />
-                </div>
-                <div className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <h3 className="flex auto items-center gap-x-2 text-lg font-semibold leading-8 text-slate-900">
-                    Unlimited Access
-                  </h3>
-                  <p className="flex-auto">
-                    We aren't limited to old lists. We search everywhere to find resources you didn't know existed.
-                  </p>
-                </div>
-              </div>
-              {/* Feature 3 */}
-              <div className="flex flex-col">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600">
-                  <Icons.check className="h-6 w-6 text-white" aria-hidden="true" />
-                </div>
-                <div className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <h3 className="flex auto items-center gap-x-2 text-lg font-semibold leading-8 text-slate-900">
-                    Real Connection
-                  </h3>
-                  <p className="flex-auto">
-                    We verify valid programs so you don't waste time. Get connected to real help, fast.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         {/* How It Works (Seeker Journey) */}
         <div className="bg-white py-24 sm:py-32 border-t border-slate-100">
@@ -124,7 +66,7 @@ export default function Home() {
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">How it works for you</h2>
               <p className="mt-6 text-lg leading-8 text-slate-600">
-                Navigating social services can be overwhelming. We make it simple, private, and fast.
+                Navigating social services can be overwhelming. Just tell Keith what you need like you're talking to a friend—no complex forms required. We verify valid programs from an unlimited list of resources to connect you to real help, fast.
               </p>
             </div>
             <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
