@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Deepgram Aura API
-        const response = await fetch(`https://api.deepgram.com/v1/speak?model=aura-orpheus-en`, {
+        const response = await fetch(`https://api.deepgram.com/v1/speak?model=aura-2-orpheus-en`, {
             method: 'POST',
             headers: {
                 'Authorization': `Token ${apiKey}`,
