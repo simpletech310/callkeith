@@ -197,9 +197,10 @@ async def perform_rag_search(query):
     final_data = []
     
     try:
-        response = supabase.table('resources').select('*').text_search('description', query).limit(5).execute()
+        response = supabase.table('resources').select('*').text_search('description', query).execute()
         if response.data:
-            final_data.extend(response.data)
+            # Manual slice since limit() might fail on builder
+            final_data.extend(response.data[:5])
     except Exception as e:
         print(f"⚠️ Primary Text Search Error (Falling back): {e}")
         try:
@@ -317,22 +318,7 @@ async def send_message(room: rtc.Room, text):
 
 async def handle_message(state: ConversationState, room: rtc.Room, message):
     try:
-        response_text = await get_ai_response(state, message)
-        
-        matches = list(re.finditer(r"\[CREATE_ACCOUNT\|(.*?)\]", response_text))
-        
-        if matches:
-            print(f"🚀 Detected {len(matches)} Account/Lead Creation Request(s)")
-            
-            final_response_text = response_text
-            is_authenticated = any("CONTEXT UPDATE: The user is authenticated" in h.get('content', '') for h in state.history)
-            
-            for match in matches:
-                full_token = match.group(0)
-                content = match.group(1)
-                
-                # Robust Parsing: Split by pipe
-                parts = [p.strip() for p in content.split('|')]
+
         ai_message = await get_ai_response(state, message)
         
         if not ai_message:
@@ -400,7 +386,8 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
                         else:
                              # Create Lead
                              # (Resource Lookup Logic)
-                             res_query = supabase.table('resources').select('id, name').text_search('description', program).limit(1).execute()
+                             # Note: .limit() chaining might fail after text_search in some versions, using range(0,1) or just executing.
+                             res_query = supabase.table('resources').select('id, name').text_search('description', program).execute()
                              if not res_query.data:
                                   res_query = supabase.table('resources').select('id, name').ilike('description', f"%{program}%").limit(1).execute()
                              
