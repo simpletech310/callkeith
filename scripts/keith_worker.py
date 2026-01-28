@@ -410,7 +410,7 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
                                      
                                      auth_info = ""
                                      if temp_pass:
-                                         base_url = os.getenv("NEXT_PUBLIC_APP_URL", "https://onward-hack.vercel.app")
+                                         base_url = os.getenv("NEXT_PUBLIC_APP_URL", "https://callkeith-git-main-teejays-projects-caad17d8.vercel.app")
                                          magic_link = f"{base_url}/magic/{user_id}"
                                          auth_info = f" Magic Link: {magic_link} | Temp Password: {temp_pass}"
                                          
