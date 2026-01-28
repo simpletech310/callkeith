@@ -405,7 +405,7 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
     
                         except Exception as e:
                             print(f"⚠️ Failed to insert lead for new user: {e}")
-                            replacement_msg = f"[Error: Failed to submit application for {program}.]"
+                            replacement_msg = f"[Error: Failed to submit application for {program}. Details: {str(e)}]"
                 
                 final_response_text = final_response_text.replace(full_token, replacement_msg)
             
