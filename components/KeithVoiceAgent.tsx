@@ -419,15 +419,15 @@ function ChatInterface() {
                     return (
                         <div key={msg.timestamp} className={cn("flex w-full", isAgent ? "justify-start" : "justify-end")}>
                             <div className={cn(
-                                "max-w-[85%] p-3 rounded-2xl shadow-sm text-sm relative leading-relaxed",
+                                "max-w-[85%] p-4 rounded-2xl shadow-sm text-sm relative leading-relaxed border",
                                 isAgent
-                                    ? "bg-white text-slate-800 border border-slate-100 rounded-tl-sm"
-                                    : "bg-emerald-600 text-white rounded-tr-sm"
+                                    ? "bg-white text-slate-600 border-slate-200 rounded-tl-sm"
+                                    : "bg-emerald-50 text-slate-700 border-emerald-100 rounded-tr-sm"
                             )}>
                                 {isAgent ? (
-                                    <span className="text-[10px] font-bold text-emerald-600 block mb-1 uppercase tracking-wider">KEITH</span>
+                                    <span className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">KEITH</span>
                                 ) : (
-                                    <span className="text-[10px] font-bold text-white/90 block mb-1 uppercase tracking-wider text-right">USER</span>
+                                    <span className="text-[10px] font-bold text-emerald-600/60 block mb-1 uppercase tracking-wider text-right">USER</span>
                                 )}
                                 {(() => {
                                     // 1. Split by Markdown Links: [Label](Url)
@@ -441,7 +441,7 @@ function ChatInterface() {
                                             const label = mdMatch[1];
                                             const url = mdMatch[2];
                                             return (
-                                                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={cn("underline font-medium hover:opacity-80", isAgent ? "text-emerald-600" : "text-white")}>
+                                                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:opacity-80 text-emerald-600">
                                                     {label}
                                                 </a>
                                             );
@@ -452,7 +452,7 @@ function ChatInterface() {
                                         const textParts = part.split(urlRegex);
                                         return textParts.map((subPart, j) =>
                                             subPart.match(urlRegex) ? (
-                                                <a key={`${i}-${j}`} href={subPart} target="_blank" rel="noopener noreferrer" className={cn("underline font-medium hover:opacity-80", isAgent ? "text-emerald-600" : "text-white")}>
+                                                <a key={`${i}-${j}`} href={subPart} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:opacity-80 text-emerald-600">
                                                     {subPart}
                                                 </a>
                                             ) : subPart
