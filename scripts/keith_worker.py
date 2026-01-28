@@ -499,11 +499,20 @@ async def entrypoint(ctx: JobContext):
     
     print(f"✅ Keith connected to room: {ctx.room.name}")
     
-    # Wait for the room to close
-    # In livekit-agents, we usually just return or await a future.
-    # For a simple chat agent, we can just wait until disconnect.
-    # But actually, JobContext automatically manages this.
-    # We just need to set up events.
+    print(f"✅ Keith connected to room: {ctx.room.name}")
+    
+    # CRITICAL: Keep the agent execution alive!
+    # If we return, the worker assumes the job is done and cleans up.
+    # We wait for the room to disconnect.
+    exit_future = asyncio.Future()
+    
+    @room.on("disconnected")
+    def on_disconnected():
+        print(f"🔌 Room disconnected: {ctx.room.name}")
+        if not exit_future.done():
+            exit_future.set_result(None)
+
+    await exit_future
 
 async def request_job(request: JobRequest):
     await request.accept(entrypoint)
