@@ -501,45 +501,50 @@ if __name__ == "__main__":
     # and use `Worker` class directly instead of `cli`.
     # This gives us control over the loop.
     
-    async def main_worker():
-        # 1. Start Health
-        _server = await health_check_server()
-        
-        # 2. Start LiveKit Worker
-        # We need to manually construct the worker
-        # This is slightly more complex but allows the composition.
-        
-        # Actually, let's look at `cli.run_app`. It takes `WorkerOptions`.
-        # It doesn't seem to allow injecting side tasks easily.
-        
-        # Revert: We will just run the health check server inside `entrypoint` BUT using a global singleton check.
-        # This means health check only starts when the *first* agent connects? 
-        # No, Render needs it immediately (within 30s).
-        # But `keith_worker.py` starts -> LiveKit Worker Connects to Cloud -> Process Jobs.
-        # If no jobs, entrypoint is never called.
-        
-        # So we really need it at process start.
-        
-        # Let's use threading for the health check server.
-        # It's an aiohttp server, so it needs an event loop.
-        # We can use a separate thread with its own loop.
-        
-        import threading
-        
-        def run_health_check_thread():
-             loop = asyncio.new_event_loop()
-             asyncio.set_event_loop(loop)
-             loop.run_until_complete(health_check_server())
-             loop.run_forever()
-             
-        t = threading.Thread(target=run_health_check_thread, daemon=True)
-        t.start()
-        
-        # Now run the agent
-        cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
+async def main_worker():
+    # 1. Start Health Check Server (Background Task)
+    # We use a separate thread for the health check so it doesn't block the agent worker
+    import threading
 
-    if __name__ == "__main__":
-        main_worker()
+    def run_health_check_thread():
+         loop = asyncio.new_event_loop()
+         asyncio.set_event_loop(loop)
+         loop.run_until_complete(health_check_server())
+         loop.run_forever()
+         
+    t = threading.Thread(target=run_health_check_thread, daemon=True)
+    t.start()
+    print("✅ Health Check Thread Started")
+    
+    # 2. Start LiveKit Worker
+    # cli.run_app() is designed to run the main event loop. 
+    # Since we are already inside an async function 'main_worker' (if we were called async),
+    # this would be tricky. BUT we call this from __main__ synchronously via asyncio.run?
+    # NO, cli.run_app() SHOULD be the entry point.
+    
+    # Let's adjust:
+    # We will invoke cli.run_app() directly in __main__.
+    
+    pass
+
+if __name__ == "__main__":
+    # 1. Start Health Check in a Daemon Thread
+    # This ensures it runs independently of the main Agent loop
+    import threading
+    
+    def run_health_check_thread():
+         loop = asyncio.new_event_loop()
+         asyncio.set_event_loop(loop)
+         loop.run_until_complete(health_check_server())
+         loop.run_forever()
+         
+    t = threading.Thread(target=run_health_check_thread, daemon=True)
+    t.start()
+
+    # 2. Run the Agent Worker
+    # cli.run_app handles the asyncio loop and signal handling for us.
+    print("🚀 Starting Keith Agent Worker (LiveKit Agents)...")
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
     def __init__(self):
         self.history = [
             {
@@ -1131,52 +1136,4 @@ async def health_check_server():
     print(f"🌍 HTTP Health Check running on port {port}")
     return site  # Return site to prevent GC
 
-async def main():
-    # Start Health Check Server (Required for Render Web Service)
-    # Keep reference to prevent Garbage Collection
-    _server = await health_check_server()
-    
-    # ... existing LiveKit connection ...
-    room = rtc.Room()
 
-    @room.on("data_received")
-    def on_data_received(data: rtc.DataPacket):
-        try:
-             msg_str = data.data.decode("utf-8")
-             msg_json = json.loads(msg_str)
-             user_msg = msg_json.get("message")
-             if user_msg:
-                 print(f"📩 Received: {user_msg}")
-                 asyncio.create_task(handle_message(room, user_msg))
-        except Exception as e:
-            print(f"⚠️ Error processing data: {e}")
-
-    # Create access token
-    token = api.AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET) \
-        .with_identity(AGENT_IDENTITY) \
-        .with_name("Keith AI") \
-        .with_grants(api.VideoGrants(room_join=True, room=ROOM_NAME)) \
-        .to_jwt()
-
-    try:
-        print(f"🔌 Connecting to {LIVEKIT_URL}...")
-        try:
-             await room.connect(LIVEKIT_URL, token)
-             print(f"✅ Connected to room: {ROOM_NAME}")
-        except Exception as connect_err:
-             print(f"⚠️ Could not connect to LiveKit (Normal if dev/offline): {connect_err}")
-             print("⚠️ Moving to generic loop for Text/Task processing.")
-
-        # Main Loop
-        print("🚀 Keith Worker Running (LiveKit + Task Polling)")
-        while True:
-            await poll_agent_tasks()
-            await asyncio.sleep(2) # Poll every 2s
-            
-    except Exception as e:
-        print(f"❌ Worker Error: {e}")
-    finally:
-        await room.disconnect()
-
-if __name__ == "__main__":
-    asyncio.run(main())
