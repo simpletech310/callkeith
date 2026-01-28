@@ -72,8 +72,7 @@ class ConversationState:
                     "1. **Trigger Application:** If they agree to the top match (or another selection), say: 'Great. I can send your application over to them right now so they have your details.'\n"
                     "2. **Confirm Details:** 'I have your details. I'm going to create your account and submit this application for you right now.'\n"
                     "3. **Validate:** Verify the email format (e.g., name@example.com) before proceeding. If unclear, ask for spelling.\n"
-                    "4. **Execute Command:** Once confirmed, trigger: `[CREATE_ACCOUNT|Name|Email|Phone|Program Name|Summary]`\n"
-                    "   - **CRITICAL:** Do NOT add labels like 'Email:'. Just the values separated by pipes.\n"
+                    "4. **Execute:** Once confirmed, CALL the `create_account` function with the specific details.\n"
                     "   - **CRITICAL:** You MUST ask for and include the Phone Number.\n\n"
                     "# OPERATIONAL GUARDRAILS\n"
                     "- **NO DATA DUMPING:** Never list more than 1 resource at a time unless explicitly asked for a list.\n"
@@ -82,6 +81,43 @@ class ConversationState:
                 )
             }
         ]
+
+# Tool Definitions
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "create_account",
+            "description": "Create a user account and submit an application for an organization/resource.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Full name of the user"
+                    },
+                    "email": {
+                        "type": "string",
+                        "description": "User's email address"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "User's phone number"
+                    },
+                    "program_name": {
+                        "type": "string",
+                        "description": "Name of the program or organization they are applying to"
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": "Brief summary of their need or situation"
+                    }
+                },
+                "required": ["name", "email", "phone", "program_name", "summary"]
+            }
+        }
+    }
+]
 
 def normalize_email_input(text: str) -> str:
     """Normalizes spoken email input."""
@@ -222,52 +258,53 @@ async def perform_rag_search(query):
         return []
 
 async def get_ai_response(state: ConversationState, user_text):
-    if not openai_client: return "I'm having trouble thinking right now. Please check my configuration."
+    if not openai_client: return None
 
-    # 1. Check for RAG triggers
-    context_msg = None
-    if any(w in user_text.lower() for w in ['need', 'find', 'looking', 'help', 'search', 'food', 'housing', 'legal']):
-        resources = await perform_rag_search(user_text)
-        if resources:
-            context_msg = "SYSTEM_RAG_RESULT: Found the following resources:\n"
-            for res in resources:
-                process = res.get('application_process', 'Contact them directly for details.')
-                programs = json.dumps(res.get('programs', []))
-                contact = res.get('contact_info', {})
-                area = contact.get('service_area', 'Unspecified')
-                cats = [res.get('category', 'Uncategorized')]
-                sec = res.get('secondary_categories', [])
-                if sec: cats.extend(sec)
-                cat_str = ", ".join(cats)
-                
-                context_msg += (
-                    f"- Name: '{res['name']}'\n"
-                    f"  Categories: {cat_str}\n" 
-                    f"  Service Area: {area}\n"
-                    f"  Description: {res['description']}\n"
-                    f"  Application Process: {process}\n"
-                    f"  Available Programs: {programs}\n\n"
-                )
-            context_msg += "INSTRUCTION: Explain the best match first, prioritizing LOCATION match. Mention others if they might help."
-            print(f"💡 RAG Context: {context_msg[:200]}...") 
+    # 1. Check for RAG triggers (only if text is provided)
+    if user_text:
+        context_msg = None
+        if any(w in user_text.lower() for w in ['need', 'find', 'looking', 'help', 'search', 'food', 'housing', 'legal']):
+            resources = await perform_rag_search(user_text)
+            if resources:
+                context_msg = "SYSTEM_RAG_RESULT: Found the following resources:\n"
+                for res in resources:
+                    process = res.get('application_process', 'Contact them directly for details.')
+                    programs = json.dumps(res.get('programs', []))
+                    contact = res.get('contact_info', {})
+                    area = contact.get('service_area', 'Unspecified')
+                    cats = [res.get('category', 'Uncategorized')]
+                    sec = res.get('secondary_categories', [])
+                    if sec: cats.extend(sec)
+                    cat_str = ", ".join(cats)
+                    
+                    context_msg += (
+                        f"- Name: '{res['name']}'\n"
+                        f"  Categories: {cat_str}\n" 
+                        f"  Service Area: {area}\n"
+                        f"  Description: {res['description']}\n"
+                        f"  Application Process: {process}\n"
+                        f"  Available Programs: {programs}\n\n"
+                    )
+                context_msg += "INSTRUCTION: Explain the best match first, prioritizing LOCATION match. Mention others if they might help."
+                print(f"💡 RAG Context: {context_msg[:200]}...") 
 
-    # 2. Update History
-    state.history.append({"role": "user", "content": user_text})
-    if context_msg:
-        state.history.append({"role": "system", "content": context_msg})
+        # 2. Update History
+        state.history.append({"role": "user", "content": user_text})
+        if context_msg:
+            state.history.append({"role": "system", "content": context_msg})
 
-    # 3. Call OpenAI
+    # 3. Call OpenAI with Tools
     try:
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=state.history
+            messages=state.history,
+            tools=TOOLS,
+            tool_choice="auto"
         )
-        reply = completion.choices[0].message.content
-        state.history.append({"role": "assistant", "content": reply})
-        return reply
+        return completion.choices[0].message
     except Exception as e:
         print(f"❌ OpenAI Error: {e}")
-        return "I'm having trouble connecting to my brain right now, but I'm here to help."
+        return None
 
 async def send_message(room: rtc.Room, text):
     print(f"📤 Sent: \"{text}\"")
@@ -296,122 +333,127 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
                 
                 # Robust Parsing: Split by pipe
                 parts = [p.strip() for p in content.split('|')]
-                
-                # Fill missing fields with defaults if LLM malformed the token
-                # Expected: Name|Email|Phone|Program|Summary (5 parts)
-                name = parts[0] if len(parts) > 0 else "Guest"
-                email_raw = parts[1] if len(parts) > 1 else ""
-                phone = parts[2] if len(parts) > 2 else "N/A"
-                program = parts[3] if len(parts) > 3 else "General Inquiry"
-                summary = parts[4] if len(parts) > 4 else "System Generated"
-                
-                # Normalize Email
-                email = normalize_email_input(email_raw)
-                
-                # Strip labels if the LLM hallucinated them (e.g. "Email: foo@bar.com")
-                if ":" in email: email = email.split(":")[-1].strip()
-                if ":" in phone: phone = phone.split(":")[-1].strip()
+        ai_message = await get_ai_response(state, message)
+        
+        if not ai_message:
+            await send_message(room, "I'm having trouble connecting right now.")
+            return
 
-                print(f"   -> Processing Lead for: {name}, Program: {program}, Email: {email}") # Log sanitized email
-                replacement_msg = "" # Default to empty to remove token
+        # Handle Tool Calls
+        if ai_message.tool_calls:
+            print(f"🚀 Detected {len(ai_message.tool_calls)} Tool Call(s)")
+            
+            # Append the assistant's tool call message to history
+            state.history.append(ai_message)
 
-                # Pre-check Email Format
-                if not validate_email_format(email):
-                    print(f"❌ Invalid Email Format Detected: {email} (Raw: {email_raw})")
-                    # We instruct the user naturally, removing the token
-                    replacement_msg = f"\n(I need a valid email to proceed. Please say it again properly, e.g. 'name at example dot com'.)\n"
-                    # We do NOT create account, just replace token with prompt
-                    final_response_text = final_response_text.replace(full_token, replacement_msg)
-                    continue
-                
-
-    
-                if is_authenticated:
-                     # Returning User Flow
-                     try:
-                         res_query = supabase.table('resources').select('id, name').text_search('description', program, config='english').limit(1).execute()
-                         if not res_query.data:
-                              res_query = supabase.table('resources').select('id, name').ilike('description', f"%{program}%").limit(1).execute()
-                         
-                         if res_query.data:
-                             resource = res_query.data[0]
-                             rid = resource['id']
-                             rname = resource['name']
-                             
-                             real_user_id = await get_user_id_by_email(email)
-                             
-                             if not real_user_id:
-                                 print(f"❌ Could not resolve ID for {email}")
-                                 replacement_msg = f"[Error: Could not verify account for {program}. Please log in manually.]"
-                             else:
-                                 existing_lead = supabase.table('leads').select('*').eq('user_id', real_user_id).eq('resource_id', rid).in_('status', ['new', 'submitted', 'acknowledged', 'accepted', 'on_hold']).execute()
-                                    
-                                 if existing_lead.data:
-                                     replacement_msg = f"\n[Status: You already have an active application for **{rname}**.]\n"
-                                 else:
-                                    new_lead = {
-                                        "user_id": real_user_id,
-                                        "resource_id": rid,
-                                        "status": "submitted",
-                                        "notes": f"{summary}\n(Source: Keith Voice Agent)"
-                                    }
-                                    supabase.table('leads').insert(new_lead).execute()
-                                    replacement_msg = f"\n[Success: I've submitted your request for **{rname}**.]\n"
-                             
-                         else:
-                             replacement_msg = f"[Error: Could not match program '{program}' to a database resource.]"
-                     except Exception as lead_err:
-                         print(f"❌ Lead Creation Error: {lead_err}")
-                         replacement_msg = f"[Error: System issue submitting for {program}.]"
-    
-                else:
-                    # New User Flow
-                    user_id, temp_pass = await create_magic_user(name, email, phone, program)
+            for tool_call in ai_message.tool_calls:
+                if tool_call.function.name == "create_account":
+                    args = json.loads(tool_call.function.arguments)
+                    print(f"   -> Processing Lead for: {args.get('name')}, Program: {args.get('program_name')}")
                     
-                    if not user_id:
-                        replacement_msg = f"[Error: Could not create account for {program}. Please apply on our website.]"
-                    else:
-                        try:
-                             res_query = supabase.table('resources').select('id, name').text_search('description', program, config='english').limit(1).execute()
+                    # Logic
+                    name = args.get('name', 'Guest')
+                    email_raw = args.get('email', '')
+                    phone = args.get('phone', 'N/A')
+                    program = args.get('program_name', 'General Inquiry')
+                    summary = args.get('summary', 'System Generated')
+                    
+                    email = normalize_email_input(email_raw)
+                    
+                    replacement_msg = ""
+                    if not validate_email_format(email):
+                         replacement_msg = f"[Error: The email you provided ({email}) looks incomplete.]"
+                         # Feedback to tool
+                         state.history.append({
+                             "tool_call_id": tool_call.id,
+                             "role": "tool",
+                             "name": "create_account",
+                             "content": json.dumps({"error": "Invalid email format. Please ask user to clarify."})
+                         })
+                         # Trigger AI again to explain error
+                         followup = await get_ai_response(state, None) # None text means just run loop
+                         if followup and followup.content:
+                             await send_message(room, followup.content)
+                         return
+
+                    # Authenticated check
+                    is_authenticated = any("CONTEXT UPDATE: The user is authenticated" in h.get('content', '') for h in state.history if isinstance(h, dict))
+
+                    result_msg = ""
+                    try:
+                        # Logic Reuse (refactor ideal, but keeping inline for minimal diff risk)
+                        # ... [Logic from previous version, adapted] ...
+                        
+                        # Simplify: We just run the creation logic
+                        user_id = None
+                        temp_pass = None
+                        
+                        if not is_authenticated:
+                            user_id, temp_pass = await create_magic_user(name, email, phone, program)
+                        else:
+                            # Assume current user (in real app we'd get ID from context/session)
+                            # For MVP voice, we rely on email lookup
+                            user_id = await get_user_id_by_email(email)
+
+                        if not user_id:
+                             result_msg = json.dumps({"status": "error", "message": "Could not create/find user account."})
+                        else:
+                             # Create Lead
+                             # (Resource Lookup Logic)
+                             res_query = supabase.table('resources').select('id, name').text_search('description', program).limit(1).execute()
                              if not res_query.data:
                                   res_query = supabase.table('resources').select('id, name').ilike('description', f"%{program}%").limit(1).execute()
                              
+                             rid = None
+                             rname = program
                              if res_query.data:
-                                 resource = res_query.data[0]
-                                 rid = resource['id']
-                                 rname = resource['name'] 
-                                 
-                                 existing_lead = supabase.table('leads').select('*').eq('user_id', user_id).eq('resource_id', rid).execute()
-                                 
-                                 if not existing_lead.data:
-                                     new_lead = {
+                                 rid = res_query.data[0]['id']
+                                 rname = res_query.data[0]['name']
+
+                             if rid:
+                                 existing = supabase.table('leads').select('*').eq('user_id', user_id).eq('resource_id', rid).execute()
+                                 if not existing.data:
+                                     supabase.table('leads').insert({
                                          "user_id": user_id,
                                          "resource_id": rid,
                                          "status": "submitted",
-                                         "notes": f"{summary}\n(Source: Keith Voice Agent - New User Flow)"
-                                     }
-                                     supabase.table('leads').insert(new_lead).execute()
-                                     print(f"✅ Created Lead for New/Guest User: {user_id}")
+                                         "notes": f"{summary}\n(Source: Keith Voice Tool)"
+                                     }).execute()
                                      
-                                     base_url = os.getenv("NEXT_PUBLIC_APP_URL", "https://onward-hack.vercel.app") 
-                                     magic_link = f"{base_url}/magic/{user_id}"
-                                     replacement_msg = (
-                                         f"\n\n[Success: Request submitted for **{rname}**.]\n"
-                                         f"Access Dashboard: [Magic Link]({magic_link})\n"
-                                         f"Temp Password: `{temp_pass}`" 
-                                     )
+                                     auth_info = ""
+                                     if temp_pass:
+                                         base_url = os.getenv("NEXT_PUBLIC_APP_URL", "https://onward-hack.vercel.app")
+                                         magic_link = f"{base_url}/magic/{user_id}"
+                                         auth_info = f" Magic Link: {magic_link} | Temp Password: {temp_pass}"
+                                         
+                                     result_msg = json.dumps({"status": "success", "message": f"Application submitted for {rname}.{auth_info}"})
                                  else:
-                                     replacement_msg = f"\n[Status: Application for **{rname}** already exists.]\n"
-    
-                        except Exception as e:
-                            print(f"⚠️ Failed to insert lead for new user: {e}")
-                            replacement_msg = f"[Error: Failed to submit application for {program}. Details: {str(e)}]"
-                
-                final_response_text = final_response_text.replace(full_token, replacement_msg)
-            
-            await send_message(room, final_response_text)
+                                     result_msg = json.dumps({"status": "exists", "message": f"Application for {rname} already exists."})
+                             else:
+                                 result_msg = json.dumps({"status": "error", "message": f"Could not find resource '{program}'."})
+
+                    except Exception as e:
+                        print(f"❌ Tool Execution Error: {e}")
+                        result_msg = json.dumps({"status": "error", "message": str(e)})
+
+                    # Send Tool Output back to AI
+                    state.history.append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": "create_account",
+                        "content": result_msg
+                    })
+
+            # Get final AI response after tool execution
+            final_response = await get_ai_response(state, None)
+            if final_response and final_response.content:
+                 await send_message(room, final_response.content)
+
         else:
-            await send_message(room, response_text)
+            # Normal Text Response
+            if ai_message.content:
+                state.history.append({"role": "assistant", "content": ai_message.content})
+                await send_message(room, ai_message.content)
 
     except Exception as e:
         print(f"❌ Error processing message: {e}")
