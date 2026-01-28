@@ -70,7 +70,7 @@ class ConversationState:
                     "- **Offer Choice:** End with: 'Would you like to start with this one, or would you like me to look for other options?'\n\n"
                     "## Phase 3: The Handoff & Verification\n"
                     "1. **Trigger Application:** If they agree to the top match (or another selection), say: 'Great. I can send your application over to them right now so they have your details.'\n"
-                    "2. **Verify Identity:** 'I just need to verify it's you. I'm sending a quick code to this phone number now.'\n"
+                    "2. **Confirm Details:** 'I have your details. I'm going to create your account and submit this application for you right now.'\n"
                     "3. **Execute Command:** Once confirmed, trigger: `[CREATE_ACCOUNT|Name|Email|Phone|Program Name|Summary]`\n\n"
                     "# OPERATIONAL GUARDRAILS\n"
                     "- **NO DATA DUMPING:** Never list more than 1 resource at a time unless explicitly asked for a list.\n"
@@ -346,7 +346,8 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
                                      supabase.table('leads').insert(new_lead).execute()
                                      print(f"✅ Created Lead for New/Guest User: {user_id}")
                                      
-                                     magic_link = f"http://localhost:3000/magic/{user_id}"
+                                     base_url = os.getenv("NEXT_PUBLIC_APP_URL", "https://onward-hack.vercel.app") 
+                                     magic_link = f"{base_url}/magic/{user_id}"
                                      replacement_msg = (
                                          f"\n\n[Success: Request submitted for **{rname}**.]\n"
                                          f"Access Dashboard: [Magic Link]({magic_link})\n"
