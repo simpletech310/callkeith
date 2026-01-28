@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path  # Added for robust path handling
 from livekit import rtc, api, agents
-from livekit.agents import JobContext, WorkerOptions, cli, JobRequest, WorkerType
+from livekit.agents import JobContext, WorkerOptions, cli, JobRequest, JobExecutorType
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from openai import AsyncOpenAI
@@ -545,7 +545,7 @@ if __name__ == "__main__":
     # cli.run_app handles the asyncio loop and signal handling for us.
     print("🚀 Starting Keith Agent Worker (LiveKit Agents)...")
     # Use THREAD worker type to avoid Process Pool timeouts on Render Free Tier
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, worker_type=WorkerType.THREAD))
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, job_executor_type=JobExecutorType.THREAD))
     def __init__(self):
         self.history = [
             {
