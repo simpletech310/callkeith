@@ -72,7 +72,9 @@ class ConversationState:
                     "1. **Trigger Application:** If they agree to the top match (or another selection), say: 'Great. I can send your application over to them right now so they have your details.'\n"
                     "2. **Confirm Details:** 'I have your details. I'm going to create your account and submit this application for you right now.'\n"
                     "3. **Validate:** Verify the email format (e.g., name@example.com) before proceeding. If unclear, ask for spelling.\n"
-                    "4. **Execute Command:** Once confirmed, trigger: `[CREATE_ACCOUNT|Name|Email|Phone|Program Name|Summary]`\n\n"
+                    "4. **Execute Command:** Once confirmed, trigger: `[CREATE_ACCOUNT|Name|Email|Phone|Program Name|Summary]`\n"
+                    "   - **CRITICAL:** Do NOT add labels like 'Email:'. Just the values separated by pipes.\n"
+                    "   - **CRITICAL:** You MUST ask for and include the Phone Number.\n\n"
                     "# OPERATIONAL GUARDRAILS\n"
                     "- **NO DATA DUMPING:** Never list more than 1 resource at a time unless explicitly asked for a list.\n"
                     "- **NO UNVERIFIED RESOURCES:** Only recommend what is in your database.\n"
@@ -80,6 +82,16 @@ class ConversationState:
                 )
             }
         ]
+
+def normalize_email_input(text: str) -> str:
+    """Normalizes spoken email input."""
+    if not text: return ""
+    # Normalize common STT artifacts
+    normalized = text.lower().strip()
+    normalized = normalized.replace(" at ", "@").replace(" dot ", ".")
+    # Remove any trailing periods often added by STT
+    if normalized.endswith("."): normalized = normalized[:-1]
+    return normalized
 
 def validate_email_format(email: str) -> bool:
     """Basic regex validation for email."""
@@ -270,7 +282,7 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
     try:
         response_text = await get_ai_response(state, message)
         
-        matches = list(re.finditer(r"\[CREATE_ACCOUNT\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\]", response_text))
+        matches = list(re.finditer(r"\[CREATE_ACCOUNT\|(.*?)\]", response_text))
         
         if matches:
             print(f"🚀 Detected {len(matches)} Account/Lead Creation Request(s)")
@@ -280,17 +292,39 @@ async def handle_message(state: ConversationState, room: rtc.Room, message):
             
             for match in matches:
                 full_token = match.group(0)
-                name, email, phone, program, summary = match.groups()
+                content = match.group(1)
                 
-                print(f"   -> Processing Lead for: {name}, Program: {program}")
-                replacement_msg = ""
+                # Robust Parsing: Split by pipe
+                parts = [p.strip() for p in content.split('|')]
+                
+                # Fill missing fields with defaults if LLM malformed the token
+                # Expected: Name|Email|Phone|Program|Summary (5 parts)
+                name = parts[0] if len(parts) > 0 else "Guest"
+                email_raw = parts[1] if len(parts) > 1 else ""
+                phone = parts[2] if len(parts) > 2 else "N/A"
+                program = parts[3] if len(parts) > 3 else "General Inquiry"
+                summary = parts[4] if len(parts) > 4 else "System Generated"
+                
+                # Normalize Email
+                email = normalize_email_input(email_raw)
+                
+                # Strip labels if the LLM hallucinated them (e.g. "Email: foo@bar.com")
+                if ":" in email: email = email.split(":")[-1].strip()
+                if ":" in phone: phone = phone.split(":")[-1].strip()
+
+                print(f"   -> Processing Lead for: {name}, Program: {program}, Email: {email}") # Log sanitized email
+                replacement_msg = "" # Default to empty to remove token
 
                 # Pre-check Email Format
-                if not validate_email_format(email.strip()):
-                    print(f"❌ Invalid Email Format Detected: {email}")
-                    replacement_msg = f"\n[Error: The email you provided ({email}) looks incomplete. Please say your email again, spelling it out if needed (e.g., 'name at example dot com').]\n"
+                if not validate_email_format(email):
+                    print(f"❌ Invalid Email Format Detected: {email} (Raw: {email_raw})")
+                    # We instruct the user naturally, removing the token
+                    replacement_msg = f"\n(I need a valid email to proceed. Please say it again properly, e.g. 'name at example dot com'.)\n"
+                    # We do NOT create account, just replace token with prompt
                     final_response_text = final_response_text.replace(full_token, replacement_msg)
                     continue
+                
+
     
                 if is_authenticated:
                      # Returning User Flow
