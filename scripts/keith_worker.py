@@ -637,10 +637,12 @@ async def health_check_server():
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
     print(f"🌍 HTTP Health Check running on port {port}")
+    return site  # Return site to prevent GC
 
 async def main():
     # Start Health Check Server (Required for Render Web Service)
-    await health_check_server()
+    # Keep reference to prevent Garbage Collection
+    _server = await health_check_server()
     
     # ... existing LiveKit connection ...
     room = rtc.Room()
